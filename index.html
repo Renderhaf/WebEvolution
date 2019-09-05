@@ -22,9 +22,14 @@
         <canvas id="chartCan" width="500" height="500"></canvas>
     </div>
     <script src="drawChart.js"></script>
+    <br/>
+    <p id="tickcounter" style="font-size: 1.5em; display: inline;"></p>
+    <p style="font-size: 1.5em; display: inline;" id="gencounter"> | Gen 0 | Avg Fitness = -1 | Mutation Rate = -1</p>
+    <div id="startdiv">
+      <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="100" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
+      <input type="button" onclick="startSim()" value="START">
+    </div>
 
-    <h2 id="tickcounter"></h2>
-    <h2 id="gencounter">Gen 0 | Avg Fitness = -1 | Mutation Rate = -1</h2>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
     <script>
       //define canvas info
@@ -42,15 +47,8 @@
       var playernum = 50;
       var walls = [{ x: 450, y: 125, w: 20, h: 250 }];
 
-      //add players to list
-      for (var i = 0; i < playernum; i++) {
-        players.push(
-          new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
-        );
-      }
 
       var ticks = 0;
-      var inter = setInterval(draw, 1000 / 30);
 
       function draw() {
         c.width = c.width;
@@ -150,7 +148,7 @@
 
           //writes info to the screen
           document.getElementById("gencounter").innerHTML =
-            "Gen " +
+            " | Gen " +
             gencounter +
             " | Avg Fitness = " +
             (fitnesses+3) +
@@ -229,6 +227,25 @@
             ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(0,255,0,0.2)";
             ch.configInfo.data.datasets[0].borderColor[0] = "rgba(0,255,0,0.75)";
         }
+      }
+
+      function startSim(){
+        var inter = setInterval(draw, 1000 / 30);
+        playernum = parseInt(document.getElementById("playerrange").value);
+
+        //add players to list
+        for (var i = 0; i < playernum; i++) {
+          players.push(
+            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
+          );
+        }
+
+        document.getElementById("startdiv").style = "visibility: hidden";
+        startSim = null;
+      }
+
+      function changePlayerLable(el){
+        document.getElementById("playerrangelable").innerHTML = " " + document.getElementById("playerrange").value + " Players";
       }
 
     </script>
