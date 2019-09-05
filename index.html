@@ -25,9 +25,18 @@
     <br/>
     <p id="tickcounter" style="font-size: 1.5em; display: inline;"></p>
     <p style="font-size: 1.5em; display: inline;" id="gencounter"> | Gen 0 | Avg Fitness = -1 | Mutation Rate = -1</p>
+
     <div id="startdiv">
-      <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="100" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
+      <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="250" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
       <input type="button" onclick="startSim()" value="START">
+      <input type="button" onclick="addWall()" value="Add Wall">
+    </div>
+
+    <div id="simControlGroup" style="visibility: hidden">
+      <input type="checkbox" onchange="changeMutateState(this.checked)">
+      <input type="button" onclick="resetSim()" value="RESET" style="margin-top: 0.25vh;">
+      <input type="range" value="30" min="1" max="750" onchange="changeSpeed(this.value)"/>
+      <span id="speedLabel" style="font-size: 1.5em"> 30</span>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
@@ -46,9 +55,11 @@
       var gencounter = 0;
       var playernum = 50;
       var walls = [{ x: 450, y: 125, w: 20, h: 250 }];
-
-
       var ticks = 0;
+      var inter;
+      var mutateState = false;
+
+      ///THROUGHOUT SIM FUNCTIONS
 
       function draw() {
         c.width = c.width;
@@ -132,18 +143,16 @@
           fitnesses /= playernum;
 
           //changes mutation rate based on the avg fitness
-          if (fitnesses > 75 && mutationrate > 0.001) {
-            mutationrate *= 0.95;
-          } else if (fitnesses > 85 && fitnesses < 95) {
-            mutationrate *= 0.9;
-          } else if (fitnesses > 95 && fitnesses > 0.0001) {
-            mutationrate *= 0.75;
-          } else if (fitnesses < 60 && gencounter >= 10) {
-            resetPlayers();
-            gencounter = 0;
-            chart.configInfo.data.labels = [];
-            chart.configInfo.data.datasets[0].data = [];
-            chart.chart.update();
+          if (!mutateState){
+            if (fitnesses > 75 && mutationrate > 0.001) {
+              mutationrate *= 0.95;
+            } else if (fitnesses > 85 && fitnesses < 95) {
+              mutationrate *= 0.9;
+            } else if (fitnesses > 95 && fitnesses > 0.0001) {
+              mutationrate *= 0.75;
+            } else if (fitnesses < 60 && gencounter >= 10) {
+              resetSim()
+            }
           }
 
           //writes info to the screen
@@ -171,6 +180,7 @@
         }
         return parseInt(fit);
       }
+
       function map(n, start1, stop1, start2, stop2) {
         return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
       }
@@ -229,8 +239,9 @@
         }
       }
 
+      //starts the sim
       function startSim(){
-        var inter = setInterval(draw, 1000 / 30);
+        inter = setInterval(draw, 1000 / 35);
         playernum = parseInt(document.getElementById("playerrange").value);
 
         //add players to list
@@ -241,6 +252,10 @@
         }
 
         document.getElementById("startdiv").style = "visibility: hidden";
+        document.getElementById("simControlGroup").style = "visibility: visible";
+
+        c.onmousedown = null;
+        clearInterval(presimint);
         startSim = null;
       }
 
@@ -248,6 +263,74 @@
         document.getElementById("playerrangelable").innerHTML = " " + document.getElementById("playerrange").value + " Players";
       }
 
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+      
+      c.onmousedown = function(e){
+        m = getMousePos(c,e);
+        for (let i = 0; i < walls.length; i++){
+          var box = walls[i];
+          if (m.x > box.x && m.x < box.x + box.w && m.y > box.y && m.y < box.y+box.h){
+            console.log("wall is " + i);
+            offset = [m["x"]-box.x,m["y"]-box.y]
+            c.onmousemove = function(e){
+              m = getMousePos(c,e);
+              walls[i].x = m["x"]-offset[0];
+              walls[i].y = m["y"]-offset[1];
+            }
+          }
+        }
+      }
+
+      c.onmouseup = function(e){
+        c.onmousemove = null;
+      }
+
+      function showPreSim(){
+        c.width = c.width;
+        ctx.fillRect(
+          target["x"] - target["s"] / 2,
+          target["y"] - target["s"] / 2,
+          target["s"],
+          target["s"]
+        );
+
+        //draw walls
+        for (wall of walls) {
+          ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        }
+
+        //draw player location
+        ctx.fillRect(190, 240, 20, 20)
+      }
+      var presimint = setInterval(showPreSim, 1000/60);
+
+      function addWall(){
+        walls.push({x:walls[walls.length-1].x-40, y:walls[walls.length-1].y, w:20, h:250});
+      }
+
+      function resetSim(){
+        resetPlayers();
+        gencounter = 0;
+        chart.configInfo.data.labels = [];
+        chart.configInfo.data.datasets[0].data = [];
+        chart.chart.update();
+      }
+
+      function changeSpeed(speed){
+        clearInterval(inter);
+        inter = setInterval(draw, 1000/speed);
+        document.getElementById("speedLabel").innerHTML = " " + speed;
+      }
+
+      function changeMutateState(state){
+        mutateState = state;
+      }
     </script>
   </body>
 </html>
