@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Evolution Simulator</title>
+  </head>
+  <body align="center">
+    <script src="EvolutionPlayer.js"></script>
+
+    <!-- Main canvas -->
+    <canvas
+      id="can"
+      width="850"
+      height="500"
+      style="border: 1px solid black"
+    ></canvas>
+
+    <!-- Fitness Chart -->
+    <div class="chart-container" style="display: inline-block; border: 1px solid black">
+        <canvas id="chartCan" width="500" height="500"></canvas>
+    </div>
+    <script src="drawChart.js"></script>
+
+    <h2 id="tickcounter"></h2>
+    <h2 id="gencounter">Gen 0 | Avg Fitness = -1 | Mutation Rate = -1</h2>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+    <script>
+      //define canvas info
+      var c = document.getElementById("can");
+      var ctx = c.getContext("2d");
+      var chart = new EvolutionChart(document.getElementById("chartCan"));
+      
+      //define evolution info
+      var target = { x: 800, y: 250, s: 50 };
+      var players = [];
+      var pw = 30;
+      var ph = 9;
+      var mutationrate = 0.002;
+      var gencounter = 0;
+      var playernum = 50;
+      var walls = [{ x: 450, y: 125, w: 20, h: 250 }];
+
+      //add players to list
+      for (var i = 0; i < playernum; i++) {
+        players.push(
+          new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
+        );
+      }
+
+      var ticks = 0;
+      var inter = setInterval(draw, 1000 / 30);
+
+      function draw() {
+        c.width = c.width;
+        for (var p = 0; p < players.length; p++) {
+          //update player
+          let player = players[p];
+          player.setAccX(player.DNA[ticks][0]);
+          player.setAccY(player.DNA[ticks][1]);
+          player.angRect(player.XYtoAng(player.Xspeed, player.Yspeed), 0.75);
+          player.update();
+
+          // canvas boudnry collision check
+          if (
+            player.x > c.width - 10 ||
+            player.x < 0 ||
+            player.y > c.height ||
+            player.y < 0
+          ) {
+            player.crash = true;
+          }
+
+          //wall collision check
+          for (wall of walls) {
+            if (
+              player.x + pw > wall.x &&
+              player.x < wall.x + wall.w &&
+              player.y > wall.y &&
+              player.y < wall.y + wall.h
+            ) {
+              player.crash = true;
+            }
+          }
+
+          //Target collision check
+          if (
+            player.x > target.x - target.s / 2 &&
+            player.x < target.x + target.s / 2 &&
+            player.y > target.y - target.s / 2 &&
+            player.y < target.y + target.s / 2
+          ) {
+            player.gotToTarget = true;
+          }
+        }
+        //Draw the target
+        ctx.fillRect(
+          target["x"] - target["s"] / 2,
+          target["y"] - target["s"] / 2,
+          target["s"],
+          target["s"]
+        );
+
+        //draw walls
+        for (wall of walls) {
+          ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        }
+        ticks++;
+
+        if (ticks == 240) {
+          ticks = 0;
+          genepool = [];
+          var fit;
+          var fitnesses = 0;
+
+          //create genepool
+          for (player of players) {
+            fit = calcfitness(player);
+            fitnesses += fit;
+            for (var i = 0; i < fit * fit; i++) {
+              genepool.push(player);
+            }
+          }
+
+          players.length = 0; //resets player array
+          //create new gen
+          for (var i = 0; i < playernum; i++) {
+            var randindex = parseInt(Math.random() * genepool.length);
+            players.push(mutate(genepool.splice(randindex, 1)[0]));
+          }
+          genepool.length = 0; //resets genepool array
+          gencounter++;
+          fitnesses /= playernum;
+
+          //changes mutation rate based on the avg fitness
+          if (fitnesses > 75 && mutationrate > 0.001) {
+            mutationrate *= 0.95;
+          } else if (fitnesses > 85 && fitnesses < 95) {
+            mutationrate *= 0.9;
+          } else if (fitnesses > 95 && fitnesses > 0.0001) {
+            mutationrate *= 0.75;
+          } else if (fitnesses < 60 && gencounter >= 10) {
+            resetPlayers();
+            gencounter = 0;
+            chart.configInfo.data.labels = [];
+            chart.configInfo.data.datasets[0].data = [];
+            chart.chart.update();
+          }
+
+          //writes info to the screen
+          document.getElementById("gencounter").innerHTML =
+            "Gen " +
+            gencounter +
+            " | Avg Fitness = " +
+            (fitnesses+3) +
+            " | Mutation Rate = " +
+            Math.round(mutationrate * 10000000) / 10000000;
+
+            addInfoToChart(chart, fitnesses)
+        }
+        document.getElementById("tickcounter").innerHTML = ticks;
+      }
+
+      function calcfitness(player) {
+        var dist = player.recordDist;
+        var fit = map(dist, 1, 1000, 100, 1);
+        if (player.getToTarget) {
+          fit *= 15;
+        }
+        if (player.crash) {
+          fit /= 2;
+        }
+        return parseInt(fit);
+      }
+      function map(n, start1, stop1, start2, stop2) {
+        return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
+      }
+
+      function mutate(player) {
+        let np = new EvolutionPlayer(
+          200,
+          250,
+          pw,
+          ph,
+          target["x"],
+          target["y"]
+        );
+        np.DNA = DNAcopy(player.DNA);
+        for (let i = 0; i < np.DNA.length; i++) {
+          if (Math.random() < mutationrate) {
+            np.DNA[i][0] = np.getRandom(0.5);
+            np.DNA[i][1] = np.getRandom(0.5);
+          }
+        }
+        return np;
+      }
+
+      function DNAcopy(dna) {
+        var ndna = [];
+        for (let i = 0; i < dna.length; i++) {
+          ndna.push(dna[i].slice());
+        }
+        return ndna;
+      }
+
+      function resetPlayers() {
+        players.length = 0;
+        for (var i = 0; i < playernum; i++) {
+          players.push(
+            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
+          );
+        }
+      }
+
+      function addInfoToChart(ch, data){
+        ch.configInfo.data.labels.push(""+gencounter);
+        ch.configInfo.data.datasets[0].data.push(data+3);
+        ch.chart.update();
+
+        //colors
+        if (data < 50){
+            ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(255,0,0,0.2)";
+            ch.configInfo.data.datasets[0].borderColor[0] = "rgba(255,0,0,0.75)";
+        } else if (data > 50 && data < 85) {
+            ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(0,0,255,0.2)";
+            ch.configInfo.data.datasets[0].borderColor[0] = "rgba(0,0,0,255,0.75)";
+        } else if (data > 85) {
+            ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(0,255,0,0.2)";
+            ch.configInfo.data.datasets[0].borderColor[0] = "rgba(0,255,0,0.75)";
+        }
+      }
+
+    </script>
+  </body>
+</html>
