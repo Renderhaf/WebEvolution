@@ -24,7 +24,7 @@
     <script src="drawChart.js"></script>
     <br/>
     <p id="tickcounter" style="font-size: 1.5em; display: inline;"></p>
-    <p style="font-size: 1.5em; display: inline;" id="gencounter"> | Gen 0 | Avg Fitness = -1 | Mutation Rate = -1</p>
+    <p style="font-size: 1.5em; display: inline;" id="gencounter"> | Gen 0 | Avg Fitness = -1 | Mutation Rate = -1 | Success Rate = -1</p>
 
     <div id="startdiv">
       <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="250" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
@@ -60,6 +60,7 @@
       var inter;
       var mutateState = false;
       var genlen = 240;
+      var winstrength = 15;
 
       ///THROUGHOUT SIM FUNCTIONS
 
@@ -124,11 +125,13 @@
           genepool = [];
           var fit;
           var fitnesses = 0;
+          var succsses = 0;
 
           //create genepool
           for (player of players) {
             fit = calcfitness(player);
             fitnesses += fit;
+            if (player.gotToTarget) succsses += 1;
             for (var i = 0; i < fit * fit; i++) {
               genepool.push(player);
             }
@@ -143,6 +146,8 @@
           genepool.length = 0; //resets genepool array
           gencounter++;
           fitnesses /= playernum;
+          succsses /= playernum;
+          succsses *= 100;
 
           //changes mutation rate based on the avg fitness
           if (!mutateState){
@@ -155,6 +160,12 @@
             } else if (fitnesses < 60 && gencounter >= 10) {
               resetSim()
             }
+
+            //make the fitness function have more bias for target hits if most targets are succeding
+            //this is to make close but not perfect creaturs die quickly, thus bringing the success rate to 100%
+            if (succsses > 50){
+              winstrength = 25;
+            } 
           }
 
           //writes info to the screen
@@ -164,9 +175,10 @@
             " | Avg Fitness = " +
             (fitnesses+3) +
             " | Mutation Rate = " +
-            Math.round(mutationrate * 10000000) / 10000000;
+            (Math.round(mutationrate * 10000000) / 10000000)  + "%" +
+            " | Success Rate = " + (Math.round(succsses * 1000) / 1000) + "%";
 
-            addInfoToChart(chart, fitnesses)
+            addInfoToChart(chart, fitnesses, succsses);
         }
         document.getElementById("tickcounter").innerHTML = ticks;
       }
@@ -175,7 +187,7 @@
         var dist = player.recordDist;
         var fit = map(dist, 1, 1000, 100, 1);
         if (player.getToTarget) {
-          fit *= 15;
+          fit *= winstrength;
         }
         if (player.crash) {
           fit /= 2;
@@ -224,22 +236,24 @@
         }
       }
 
-      function addInfoToChart(ch, data){
+      function addInfoToChart(ch, fitdata, sucdata){
         ch.configInfo.data.labels.push(""+gencounter);
-        ch.configInfo.data.datasets[0].data.push(data+3);
+        ch.configInfo.data.datasets[0].data.push(fitdata+3);
+        ch.configInfo.data.datasets[1].data.push(sucdata);
         ch.chart.update();
 
         //colors
-        if (data < 50){
+        if (fitdata < 50){
             ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(255,0,0,0.2)";
             ch.configInfo.data.datasets[0].borderColor[0] = "rgba(255,0,0,0.75)";
-        } else if (data > 50 && data < 85) {
+        } else if (fitdata > 50 && fitdata < 85) {
             ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(0,0,255,0.2)";
             ch.configInfo.data.datasets[0].borderColor[0] = "rgba(0,0,0,255,0.75)";
-        } else if (data > 85) {
+        } else if (fitdata > 85) {
             ch.configInfo.data.datasets[0].backgroundColor[0] = "rgba(0,255,0,0.2)";
             ch.configInfo.data.datasets[0].borderColor[0] = "rgba(0,255,0,0.75)";
         }
+
       }
 
       //starts the sim
@@ -324,6 +338,7 @@
         gencounter = 0;
         chart.configInfo.data.labels = [];
         chart.configInfo.data.datasets[0].data = [];
+        chart.configInfo.data.datasets[1].data = [];
         chart.chart.update();
       }
 

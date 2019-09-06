@@ -11,6 +11,12 @@ class EvolutionChart{
                 backgroundColor: ["rgba(255,0,0,0.2)"],
                 borderColor: ["rgba(255,0,0,0.75)"],
                 borderWidth: 1
+              },
+              {
+                label: "Success %",
+                data: [],
+                borderColor: ["rgba(0,0,0,0.75)"],
+                borderWidth: 1
               }
             ]
           },
