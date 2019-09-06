@@ -173,7 +173,7 @@
             " | Gen " +
             gencounter +
             " | Avg Fitness = " +
-            (fitnesses+3) +
+            (Math.round((fitnesses+3) * 1000) / 1000) +
             " | Mutation Rate = " +
             (Math.round(mutationrate * 10000000) / 10000000)  + "%" +
             " | Success Rate = " + (Math.round(succsses * 1000) / 1000) + "%";
