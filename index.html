@@ -30,6 +30,7 @@
       <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="250" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
       <input type="button" onclick="startSim()" value="START">
       <input type="button" onclick="addWall()" value="Add Wall">
+      <input type="text" placeholder="Genlen" value="240" id="genlen" size="1">
     </div>
 
     <div id="simControlGroup" style="visibility: hidden">
@@ -58,6 +59,7 @@
       var ticks = 0;
       var inter;
       var mutateState = false;
+      var genlen = 240;
 
       ///THROUGHOUT SIM FUNCTIONS
 
@@ -117,7 +119,7 @@
         }
         ticks++;
 
-        if (ticks == 240) {
+        if (ticks == genlen) {
           ticks = 0;
           genepool = [];
           var fit;
@@ -192,7 +194,8 @@
           pw,
           ph,
           target["x"],
-          target["y"]
+          target["y"],
+          genlen
         );
         np.DNA = DNAcopy(player.DNA);
         for (let i = 0; i < np.DNA.length; i++) {
@@ -216,7 +219,7 @@
         players.length = 0;
         for (var i = 0; i < playernum; i++) {
           players.push(
-            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
+            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"], genlen)
           );
         }
       }
@@ -243,11 +246,13 @@
       function startSim(){
         inter = setInterval(draw, 1000 / 35);
         playernum = parseInt(document.getElementById("playerrange").value);
-
+        genlen = parseInt(document.getElementById("genlen").value);
+        console.log(genlen);
+      
         //add players to list
         for (var i = 0; i < playernum; i++) {
           players.push(
-            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"])
+            new EvolutionPlayer(200, 250, pw, ph, target["x"], target["y"], genlen)
           );
         }
 

@@ -1,5 +1,5 @@
 class EvolutionPlayer{
-    constructor(x,y,w,h,tx,ty){
+    constructor(x,y,w,h,tx,ty,genlen){
         this.x = x;
         this.y = y;
         this.w = w;
@@ -14,7 +14,7 @@ class EvolutionPlayer{
         this.maxP = 0.03;
         this.accdiv = 0.0001;
         this.closeF = 0.99;
-        this.DNA = this.createDNA(240);
+        this.DNA = this.createDNA(genlen);
         this.crash = false;
         this.recordDist = this.calcDist();
         this.gotToTarget = false; 
