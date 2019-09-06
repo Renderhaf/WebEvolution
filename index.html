@@ -27,7 +27,7 @@
     <p style="font-size: 1.5em; display: inline;" id="gencounter"> | Gen 0 | Avg Fitness = -1 | Mutation Rate = -1 | Success Rate = -1</p>
 
     <div id="startdiv">
-      <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="250" value="25"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 25 Players</label>
+      <input onmousemove="changePlayerLable(this)" type="range" id="playerrange" min="1" max="500" value="100"/><label id="playerrangelable" style="font-size: 1.5em; display: inline;"> 100 Players</label>
       <input type="button" onclick="startSim()" value="START">
       <input type="button" onclick="addWall()" value="Add Wall">
       <input type="text" placeholder="Genlen" value="240" id="genlen" size="1">
@@ -36,7 +36,7 @@
     <div id="simControlGroup" style="visibility: hidden">
       <input type="checkbox" onchange="changeMutateState(this.checked)">
       <input type="button" onclick="resetSim()" value="RESET" style="margin-top: 0.25vh;">
-      <input type="range" value="100" min="1" max="750" onchange="changeSpeed(this.value)"/>
+      <input type="range" value="30" min="1" max="750" onchange="changeSpeed(this.value)"/>
       <span id="speedLabel" style="font-size: 1.5em"> 30</span>
     </div>
 
