@@ -151,7 +151,7 @@
 
           //changes mutation rate based on the avg fitness
         
-          if (fitnesses > 75 && mutationrate > 0.001 && succsses > 0) {
+          if (mutationrate > 0.001 && succsses > 0) {
             mutationrate *= 0.95;
           } else if (fitnesses > 85 && fitnesses < 95 && succsses > 0) {
             mutationrate *= 0.9;
