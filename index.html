@@ -34,10 +34,10 @@
     </div>
 
     <div id="simControlGroup" style="visibility: hidden">
-      <input type="checkbox" onchange="changeMutateState(this.checked)">
+      <span>KEEP </span><input type="checkbox" onchange="changeKeepState(this.checked)">
       <input type="button" onclick="resetSim()" value="RESET" style="margin-top: 0.25vh;">
       <input type="range" value="30" min="1" max="750" onchange="changeSpeed(this.value)"/>
-      <span id="speedLabel" style="font-size: 1.5em"> 30</span>
+      <span id="speedLabel" style="font-size: 1.5em"> 30 FPS</span>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
@@ -58,7 +58,7 @@
       var walls = [{ x: 450, y: 125, w: 20, h: 250 }];
       var ticks = 0;
       var inter;
-      var mutateState = false;
+      var keepState = false;
       var genlen = 240;
       var winstrength = 15;
 
@@ -150,23 +150,23 @@
           succsses *= 100;
 
           //changes mutation rate based on the avg fitness
-          if (!mutateState){
-            if (fitnesses > 75 && mutationrate > 0.001 && succsses > 0) {
-              mutationrate *= 0.95;
-            } else if (fitnesses > 85 && fitnesses < 95 && succsses > 0) {
-              mutationrate *= 0.9;
-            } else if (fitnesses > 95 && fitnesses > 0.0001 && succsses > 0) {
-              mutationrate *= 0.75;
-            } else if (fitnesses < 60 && gencounter >= 10) {
-              resetSim()
-            }
-
-            //make the fitness function have more bias for target hits if most targets are succeding
-            //this is to make close but not perfect creaturs die quickly, thus bringing the success rate to 100%
-            if (succsses > 50){
-              winstrength = 25;
-            } 
+        
+          if (fitnesses > 75 && mutationrate > 0.001 && succsses > 0) {
+            mutationrate *= 0.95;
+          } else if (fitnesses > 85 && fitnesses < 95 && succsses > 0) {
+            mutationrate *= 0.9;
+          } else if (fitnesses > 95 && fitnesses > 0.0001 && succsses > 0) {
+            mutationrate *= 0.75;
+          } else if (fitnesses < 60 && gencounter >= 10 && !keepState) {
+            resetSim()
           }
+
+          //make the fitness function have more bias for target hits if most targets are succeding
+          //this is to make close but not perfect creaturs die quickly, thus bringing the success rate to 100%
+          if (succsses > 50){
+            winstrength = 25;
+          } 
+        
 
           //writes info to the screen
           document.getElementById("gencounter").innerHTML =
@@ -345,11 +345,11 @@
       function changeSpeed(speed){
         clearInterval(inter);
         inter = setInterval(draw, 1000/speed);
-        document.getElementById("speedLabel").innerHTML = " " + speed;
+        document.getElementById("speedLabel").innerHTML = " " + speed + " FPS";
       }
 
-      function changeMutateState(state){
-        mutateState = state;
+      function changeKeepState(state){
+        keepState = state;
       }
     </script>
   </body>
