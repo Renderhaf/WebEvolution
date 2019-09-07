@@ -151,12 +151,8 @@
 
           //changes mutation rate based on the avg fitness
         
-          if (mutationrate > 0.001 && succsses > 0) {
+          if (succsses > 0) {
             mutationrate *= 0.95;
-          } else if (fitnesses > 85 && fitnesses < 95 && succsses > 0) {
-            mutationrate *= 0.9;
-          } else if (fitnesses > 95 && fitnesses > 0.0001 && succsses > 0) {
-            mutationrate *= 0.75;
           } else if (fitnesses < 60 && gencounter >= 10 && !keepState) {
             resetSim()
           }
